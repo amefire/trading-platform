@@ -6,6 +6,7 @@ import { User } from './../entities/User';
 //import {argon2} from 'argon2';
 import * as argon2 from "argon2";
 import { Entity } from '@mikro-orm/core';
+//import { session } from 'express-session';
 
 
 
@@ -45,6 +46,18 @@ class UsernamePasswordInput{
 
 @Resolver()
 export class UserResolver {
+    @Query(()=> User,{nullable:true})
+    async me(
+        @Ctx() ctx: MyContext
+    ){
+
+        if(!ctx.req.session.userId){
+            return null // you are not logged in
+        }
+
+        const user = await ctx.em.findOne(User,{_id: ctx.req.session.userId}); 
+        return user
+    }
 
     
 
@@ -98,6 +111,7 @@ export class UserResolver {
              }
          }
         
+         ctx.req.session.userId = user._id; // this will set a cookie on the user and keep them logged in
         
         return {user};
         
@@ -142,6 +156,7 @@ export class UserResolver {
         };
     }
         
+    ctx.req.session.userId = user._id; //ben: ctx.req.session.uuserId = user._id;
         return {user,};
         // {
         //     user,

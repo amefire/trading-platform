@@ -18,6 +18,7 @@ import redis from 'redis';
 import session  from 'express-session';
 import connectRedis from 'connect-redis';
 import { MyContext } from 'src/types';
+import cors from "cors";
 
 
 
@@ -42,6 +43,9 @@ const main = async ()=>{
 
     const RedisStore = connectRedis(session)
 const redisClient = redis.createClient()
+app.use(cors({origin: "http://localhost:3000",
+credentials:true,
+}));
 
 app.use(
   session({
@@ -74,7 +78,7 @@ cookie:{
         context: ({req,res}): MyContext =>({ em: orm.em,req, res}) // context is a special object accessible by all our resolvers// so here all our resolvers will share the micro-orm connection to our db before executing a query or mutation
     });// we can access our session in our resolvers by passing in the req and res objects
 
-    apolloServer.applyMiddleware({ app });
+    apolloServer.applyMiddleware({ app,cors:false  }); // we are applying the apollo server middleware on the express 'app'
     // app.get('/', (_,res) =>{
 
     //     res.send('hello world');

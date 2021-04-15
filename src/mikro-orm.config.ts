@@ -10,8 +10,10 @@ export default {
 
     entities:[Post, User],
     dbName:'tradingdb',
-    type:'mongo', 
-    debug: !_prod_,
+    type:'mongo',
+   debug: !_prod_,
+ 
+    //debug:true
    // ensureIndexes: true, // defaults to false
     
 

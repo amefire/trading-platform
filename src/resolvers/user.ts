@@ -14,9 +14,9 @@ import { Entity } from '@mikro-orm/core';
 class UsernamePasswordInput{
 
         @Field()
-        username: string;
+        username!: string;
         @Field()
-        password: string;
+        password!: string;
     }
 
     @ObjectType()
@@ -64,7 +64,7 @@ export class UserResolver {
     @Mutation(()=> UserResponse) // Queries are for getting datas, 'MUTATIONS' are for updating, deleting, inserting datas.
     async register( 
 
-        @Arg('options') options: UsernamePasswordInput,
+        @Arg('options',() => UsernamePasswordInput, {nullable: true}) options: UsernamePasswordInput,
 
         @Ctx() ctx: MyContext
     ) : Promise<UserResponse>

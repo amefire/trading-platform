@@ -28,11 +28,11 @@ export class User {
   @Unique()
   @Index()
   @Property({type:"text", unique: true})
-  username!: string;
+  username: string;
 
 //@Field() //we re not exposing the password field to graphql, because we don't wanna allow the client to select the password
   @Property({type:"text", unique: true}) // we are only creating password as a database column
-  password!: string;
+  password: string;
 
   
 

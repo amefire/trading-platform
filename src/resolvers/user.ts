@@ -95,6 +95,7 @@ export class UserResolver {
             await ctx.em.persistAndFlush(user);
 
         }
+        
         catch(err)
         {
             //console.log("message: ", err.code);

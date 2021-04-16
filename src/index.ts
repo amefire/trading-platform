@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import {MikroORM } from "@mikro-orm/core";
-import { _prod_ } from "./constants";
+import { COOKIE_NAME, _prod_ } from "./constants";
 
 //import { Post } from './entities/Post';
 import microConfig from "./mikro-orm.config";
@@ -49,7 +49,7 @@ credentials:true,
 
 app.use(
   session({
-      name:'qid',
+      name:COOKIE_NAME,
     store: new RedisStore({ client: redisClient,
     disableTouch: true,
    // disableTTL: true

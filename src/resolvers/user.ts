@@ -6,6 +6,7 @@ import { User } from './../entities/User';
 //import {argon2} from 'argon2';
 import * as argon2 from "argon2";
 import { Entity } from '@mikro-orm/core';
+import { COOKIE_NAME } from "./../constants";
 //import { session } from 'express-session';
 
 
@@ -165,6 +166,24 @@ export class UserResolver {
         
         //return 'hello';
         //ctx.em.findOne
+    }
+
+    @Mutation(()=>Boolean)
+    logout(
+        @Ctx() ctx:MyContext
+    ){
+      return new Promise((resolve)=> 
+        ctx.req.session.destroy((err: any) =>{
+        // ctx.res.clearCookie("qid");   
+        if(err){
+               console.log(err)
+               resolve(false)
+               return
+           }
+           ctx.res.clearCookie(COOKIE_NAME); 
+           resolve(true)
+       })) // will remove the session from redis
+
     }
 
 

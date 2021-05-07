@@ -14,11 +14,13 @@ import { UserResolver } from './resolvers/user';
 
 //
 
-import redis from 'redis';
+import Redis from 'ioredis';
 import session  from 'express-session';
 import connectRedis from 'connect-redis';
 import { MyContext } from 'src/types';
 import cors from "cors";
+import { sendEmail } from './utils/sendEmail';
+import { User } from './entities/User';
 
 
 
@@ -33,8 +35,10 @@ import cors from "cors";
 
 
 const main = async ()=>{
+
+    //sendEmail('pepmefire@gmail.com','hidd');
     const orm = await MikroORM.init(microConfig);
-   
+  // await orm.em.nativeDelete(User, {});
     
     // const post = orm.em.create(Post, {title: 'areas'});
     // await orm.em.persistAndFlush(post);
@@ -42,7 +46,8 @@ const main = async ()=>{
     const app = express();
 
     const RedisStore = connectRedis(session)
-const redisClient = redis.createClient()
+//const redisClient = Redis()
+const redis = new Redis()
 app.use(cors({origin: "http://localhost:3000",
 credentials:true,
 }));
@@ -50,7 +55,7 @@ credentials:true,
 app.use(
   session({
       name:COOKIE_NAME,
-    store: new RedisStore({ client: redisClient,
+    store: new RedisStore({ client: redis,
     disableTouch: true,
    // disableTTL: true
     
@@ -75,7 +80,7 @@ cookie:{
             validate: false
         }),  // await the graphql schema
 
-        context: ({req,res}): MyContext =>({ em: orm.em,req, res}) // context is a special object accessible by all our resolvers// so here all our resolvers will share the micro-orm connection to our db before executing a query or mutation
+        context: ({req,res}): MyContext =>({ em: orm.em,req, res, redis}) // context is a special object accessible by all our resolvers// so here all our resolvers will share the micro-orm connection to our db before executing a query or mutation
     });// we can access our session in our resolvers by passing in the req and res objects
 
     apolloServer.applyMiddleware({ app,cors:false  }); // we are applying the apollo server middleware on the express 'app'

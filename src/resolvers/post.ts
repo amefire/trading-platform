@@ -70,7 +70,7 @@ export class PostResolver {
         await ctx.em.persistAndFlush(post)
         return post;
         //return 'hello';
-       // ctx.em.findOne
+        ctx.em.findOne
     }
 
 

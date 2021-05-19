@@ -1,24 +1,32 @@
 //table
 
-import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
+//import { Entity, PrimaryKey, Column } from "@mikro-orm/core";
+
 import { ObjectId } from "@mikro-orm/mongodb";
 import { Field, ObjectType } from "type-graphql";
+import { Column, Entity } from "typeorm";
+import { PrimaryGeneratedColumn } from 'typeorm';
+import { UpdateDateColumn } from 'typeorm';
+import { CreateDateColumn,BaseEntity } from 'typeorm';
 @ObjectType() // we add this to be able to expose this type to graphql
 @Entity()
-export class Post {
+export class Post extends BaseEntity{
   @Field() /// @field exposes the Post mikro-orm entity to our graphql schema
-  @PrimaryKey()
-  _id:string;
+  @PrimaryGeneratedColumn()
+  id!:number;
 
   @Field(()=> String) 
-  @Property({type: "date"})
-  createdAt= new Date();
+  @CreateDateColumn()
+  createdAt: Date;
   
-  @Property({onUpdate:()=> new Date()})
-  updatedAt= new Date();
+  
+  @Field(()=> String) 
+  @UpdateDateColumn()
+  updatedAt :Date;
+
   @Field()
-  @Property({type:"text"})
-  title: string;
+  @Column()
+  title!: string;
 
   
 

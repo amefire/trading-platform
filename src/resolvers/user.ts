@@ -12,6 +12,7 @@ import { validateRegister } from './../utils/validateRegister';
 import { sendEmail } from "./../utils/sendEmail";
 
 import {v4} from 'uuid';
+import { getConnection } from "typeorm";
 //import { errors } from './../../../frontend/.next/static/chunks/main';
     @ObjectType()
     class FieldError{ // errors messages here will be displayed in the UI
@@ -45,7 +46,7 @@ export class UserResolver {
     // @FieldResolver(() => String)
     // email(@Root() user: User, @Ctx() { req }: MyContext) {
     //   // this is the current user and its ok to show them their own email
-    //   if (req.session.userId === user._id) {
+    //   if (req.session.userId === user.id) {
     //     return user.email;
     //   }
     //   // current user wants to see someone elses email
@@ -56,7 +57,7 @@ export class UserResolver {
     async changePassword(
       @Arg("token") token: string,
       @Arg("newPassword") newPassword: string,
-      @Ctx() { redis, req,em }: MyContext
+      @Ctx() { redis, req }: MyContext
     ): Promise<UserResponse> {
       if (newPassword.length <= 2) {
         return {
@@ -82,9 +83,9 @@ export class UserResolver {
         };
       }
   
-      //const userIdNum = parseInt(userId);
+      const userIdNum = parseInt(userId);
       //const user = await User.findOne(userId);
-     const user = await em.findOne(User,{_id: userId})
+     const user = await User.findOne(userIdNum)
       if (!user) {
         return {
           errors: [
@@ -96,8 +97,10 @@ export class UserResolver {
         };
       }
   
-      user.password = await argon2.hash(newPassword)
-      await em.persistAndFlush(user);
+      
+      
+      await User.update({id:userIdNum},
+        {password: await argon2.hash(newPassword) })
 
       // await em.nativeUpdate({id: userId}, User,{password: await argon2.hash(newPassword)})
     
@@ -111,7 +114,7 @@ export class UserResolver {
       await redis.del(key);
   
       // log in user after change password
-      req.session.userId = user._id;
+      req.session.userId = user.id;
   
       return { user };
     }
@@ -123,10 +126,12 @@ export class UserResolver {
     @Mutation(()=> Boolean)
  async   forgotPassword(
         @Arg('email') email: string,
+        @Ctx() ctx:MyContext
 
-        @Ctx() ctx: MyContext
+       
     ){
-        const user = await ctx.em.findOne(User, {email:email});
+        const user = await User.findOne({where: {email}});
+        
       // const user = await User.findOne({ where: { email } });
         if(!user){
             // the email is not in the db
@@ -135,7 +140,7 @@ export class UserResolver {
         const token = v4();// create unique tokens
         // a token help us to validate that we know who they are
         
-       await  ctx.redis.set(FORGET_PASSWORD_PREFIX + token, user._id, 'ex', 1000 * 60*60*24*3)// the reset link has an expiration time of 3 days
+       await  ctx.redis.set(FORGET_PASSWORD_PREFIX + token, user.id, 'ex', 1000 * 60*60*24*3)// the reset link has an expiration time of 3 days
         await sendEmail(email,`<a href="http://localhost:3000/change-password/${token}"> reset password</a>`);
     return true
     }
@@ -148,8 +153,8 @@ export class UserResolver {
             return null // you are not logged in
         }
 
-        const user = await ctx.em.findOne(User,{_id: ctx.req.session.userId}); 
-        return user
+        return await User.findOne(ctx.req.session.userId); 
+        
     }
 
     
@@ -171,18 +176,33 @@ export class UserResolver {
 
         const hashedPassword = await argon2.hash(options.password);
 
-        const user = ctx.em.create(User, {email: options.email,username: options.username, password: hashedPassword}); // we are not passing the password because we don't want to save a plain text password to the db, in case the db eventually gets hacked
+      //  let user = await User.create({email: options.email,username: options.username, password: hashedPassword}).save(); // we are not passing the password because we don't want to save a plain text password to the db, in case the db eventually gets hacked
         //await ctx.em.persistAndFlush(user);
+        let user 
         try{
-            await ctx.em.persistAndFlush(user);
+         //   await ctx.em.persistAndFlush(user);
+           // const result = await User.create({email: options.email,username: options.username, password: hashedPassword}).save(); // we are not passing the password because we don't want to save a plain text password to the db, in case the db eventually gets hacked
+          //user = result as any|undefined ;
+          const result = await getConnection()
+          .createQueryBuilder()
+          .insert()
+          .into(User)
+          .values({
+            username: options.username,
+            email: options.email,
+            password: hashedPassword,
+          })
+          .returning("*")
+          .execute();
+        user = result.raw[0];
 
-        }
+          }
         
         catch(err)
         {
             //console.log("message: ", err.code);
 
-             if(err.code ===11000){
+             if(err.code ==="23505"){
                 return {
                     errors:[
                         {
@@ -192,9 +212,10 @@ export class UserResolver {
                     ],
                 }
              }
+             
          }
         
-         ctx.req.session.userId = user._id; // this will set a cookie on the user and keep them logged in
+         ctx.req.session.userId = user.id; // this will set a cookie on the user and keep them logged in
         
         return {user};
         
@@ -214,9 +235,9 @@ export class UserResolver {
 
       //  const hashedPassword = await argon2.hash(options.password);
 
-        const user = await ctx.em.findOne(User, usernameOrEmail.includes('@') ? {email: usernameOrEmail}
+        const user = await User.findOne(usernameOrEmail.includes('@') ? {where :{email: usernameOrEmail}}
         :
-        {username: usernameOrEmail}); // we are not passing the password because we don't want to save a plain text password to the db, in case the db eventually gets hacked
+        {where:{username: usernameOrEmail}}); // we are not passing the password because we don't want to save a plain text password to the db, in case the db eventually gets hacked
         if(!user){
 
             return {
@@ -241,7 +262,7 @@ export class UserResolver {
         };
     }
         
-    ctx.req.session.userId = user._id; //ben: ctx.req.session.uuserId = user._id;
+    ctx.req.session.userId = user.id; //ben: ctx.req.session.uuserId = user.id;
         return {user,};
         // {
         //     user,

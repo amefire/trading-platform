@@ -19,7 +19,9 @@ import session  from 'express-session';
 import connectRedis from 'connect-redis';
 import { MyContext } from 'src/types';
 import cors from "cors";
-import { sendEmail } from './utils/sendEmail';
+
+import {createConnection} from 'typeorm';
+import { Post } from './entities/Post';
 import { User } from './entities/User';
 
 
@@ -37,7 +39,21 @@ import { User } from './entities/User';
 const main = async ()=>{
 
     //sendEmail('pepmefire@gmail.com','hidd');
-    const orm = await MikroORM.init(microConfig);
+
+    const conn = await createConnection({
+        type: "postgres",
+
+        username: "postgres",
+    password: "test123",
+      
+     database:'tradingdbtypeorm',
+    //database:'tradingdb',
+    logging: true,
+         synchronize: true,// will create the tables automatically and you won't need to create migrations
+      //  migrations: [path.join(__dirname, "./migrations/*")],
+        entities: [Post, User],
+      });
+   ////// const orm = await MikroORM.init(microConfig);
   // await orm.em.nativeDelete(User, {});
     
     // const post = orm.em.create(Post, {title: 'areas'});
@@ -80,7 +96,9 @@ cookie:{
             validate: false
         }),  // await the graphql schema
 
-        context: ({req,res}): MyContext =>({ em: orm.em,req, res, redis}) // context is a special object accessible by all our resolvers// so here all our resolvers will share the micro-orm connection to our db before executing a query or mutation
+        context: ({req,res}) =>({ req, res, redis})
+
+        // context: ({req,res}): MyContext =>({ em: orm.em,req, res, redis}) // context is a special object accessible by all our resolvers// so here all our resolvers will share the micro-orm connection to our db before executing a query or mutation
     });// we can access our session in our resolvers by passing in the req and res objects
 
     apolloServer.applyMiddleware({ app,cors:false  }); // we are applying the apollo server middleware on the express 'app'

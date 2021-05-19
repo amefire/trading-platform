@@ -6,12 +6,9 @@ import { Post } from './../entities/Post';
 export class PostResolver {
 
     @Query(()=> [Post]) // we specified the type of objects the query is returning ie 'Posts'
-    posts(
-
-        @Ctx() ctx: MyContext
-    ) : Promise<Post[]>
+    posts() : Promise<Post[]>
     {
-        return ctx.em.find(Post,{});
+        return Post.find({});
         //return 'hello';
     }
 
@@ -20,14 +17,13 @@ export class PostResolver {
     @Query(()=> Post, {nullable:true}) // we specified the type of objects the query is returning ie 'Posts'
     post(
 
-        @Arg("id",() => String) _id: string,
+        @Arg("id",() => String) id: string,
 
-        @Ctx() ctx: MyContext
-    ) : Promise<Post | null>
+       
+    ) : Promise<Post | undefined>
     {
-        return ctx.em.findOne(Post,  {_id});
-        //return 'hello';
-        ctx.em.findOne
+        return Post.findOne(id);
+        
     }
 
 
@@ -36,27 +32,24 @@ export class PostResolver {
 
         @Arg("title",() => String) title: string,
 
-        @Ctx() ctx: MyContext
     ) : Promise<Post>
     {
-        const post = ctx.em.create(Post, {title});
-        await ctx.em.persistAndFlush(post)
-        return post;
-        //return 'hello';
-        ctx.em.findOne
+        // 
+        return Post.create({title}).save()
+      
     }
 
 
     @Mutation(()=> Post,{nullable:true}) // Queries are for getting datas, 'MUTATIONS' are for updating, deleting, inserting datas.
     async updatePost(
 
-        @Arg("id",() => String) _id: string,
+        @Arg("id",() => String) id: number,
         @Arg("title",() => String, {nullable: true}) title: string,
 
-        @Ctx() ctx: MyContext
+        
     ) : Promise<Post | null>
     {
-        const post = await ctx.em.findOne(Post, {_id});
+        const post = await Post.findOne(id);
         if(!post){
             return null;
 
@@ -64,10 +57,11 @@ export class PostResolver {
         }
 
         if(typeof title !== 'undefined'){
-            post.title = title;
-            await ctx.em.persistAndFlush(post)
+            
+            Post.update({id},{title}); //update the title of a specific ID
         }
-        await ctx.em.persistAndFlush(post)
+        Post.update({id},{title})
+        
         return post;
         //return 'hello';
        // ctx.em.findOne
@@ -78,15 +72,13 @@ export class PostResolver {
     @Mutation(()=> Boolean) // Queries are for getting datas, 'MUTATIONS' are for updating, deleting, inserting datas.
     async deletePost(
 
-        @Arg("id",() => String) _id: string,
+        @Arg("id",() => String) id: string,
        
-        @Ctx() ctx: MyContext
     ) : Promise<boolean>
     {
-       await ctx.em.nativeDelete(Post, {_id});
+       await Post.delete(id);
         return true;
-        //return 'hello';
-        ctx.em.findOne
+       
     }
 
 }

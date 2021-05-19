@@ -1,49 +1,46 @@
 //table
 
-import { Entity, Index, PrimaryKey, Property, Unique } from "@mikro-orm/core";
+//import { Entity, Index, PrimaryKey, Property, Unique } from "@mikro-orm/core";
 //import { ObjectId } from "@mikro-orm/mongodb";
 import { Field, ObjectType } from "type-graphql";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity } from 'typeorm';
 
 
 @ObjectType() // we add this to be able to expose this type 'User' to graphql
  @Entity()
-export class User {
-  static findOne(userId: string) {
-      throw new Error("Method not implemented.");
-  }
-  static update(arg0: { id: any; }, arg1: { password: string; }) {
-      throw new Error("Method not implemented.");
-  }
+export class User extends BaseEntity {
+  
   @Field() /// @field exposes the Post mikro-orm entity to our graphql schema
-  @PrimaryKey()
-  _id: string;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
   @Field(()=> String) 
-  @Property({type: "date"})
-  createdAt= new Date();
+  @CreateDateColumn()
+  createdAt: Date;
 
   //updatedAt = new Date();
   
   @Field(()=> String)
-   @Property({type:"date",onUpdate:()=> new Date()})
-   updatedAt= new Date();
+   @UpdateDateColumn()
+   updatedAt:Date;
 
 
 
   @Field()
-  @Unique()
-  @Index()
-  @Property({type:"text", unique: true})
+  // @Unique()
+  // @Index()
+  @Column({unique: true})
   username!: string;
 
   @Field()
-  @Unique()
-  @Index()
-  @Property({type:"text", unique: true})
+  // @Unique()
+  // @Index()
+  @Column({ unique: true})
   email!: string;
 
 //@Field() //we re not exposing the password field to graphql, because we don't wanna allow the client to select the password
-  @Property({type:"text", unique: true}) // we are only creating password as a database column
+  @Column() // we are only creating password as a database column
   password!: string;
     //id: any;
 

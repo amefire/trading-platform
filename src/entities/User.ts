@@ -3,8 +3,9 @@
 //import { Entity, Index, PrimaryKey, Property, Unique } from "@mikro-orm/core";
 //import { ObjectId } from "@mikro-orm/mongodb";
 import { Field, ObjectType } from "type-graphql";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { BaseEntity } from 'typeorm';
+import { Post } from "./Post";
 
 
 @ObjectType() // we add this to be able to expose this type 'User' to graphql
@@ -14,6 +15,10 @@ export class User extends BaseEntity {
   @Field() /// @field exposes the Post mikro-orm entity to our graphql schema
   @PrimaryGeneratedColumn()
   id!: number;
+
+
+
+  
 
   @Field(()=> String) 
   @CreateDateColumn()
@@ -46,6 +51,8 @@ export class User extends BaseEntity {
 
   
 
+    @OneToMany(() => Post, (post) => post.creator)
+    posts: Post[];
  
 
 }

@@ -1,9 +1,8 @@
 import 'reflect-metadata';
-import {MikroORM } from "@mikro-orm/core";
+
 import { COOKIE_NAME, _prod_ } from "./constants";
 
-//import { Post } from './entities/Post';
-import microConfig from "./mikro-orm.config";
+
 
 import express from 'express';
 import {ApolloServer} from 'apollo-server-express';
@@ -23,6 +22,7 @@ import cors from "cors";
 import {createConnection} from 'typeorm';
 import { Post } from './entities/Post';
 import { User } from './entities/User';
+
 
 
 
@@ -80,7 +80,7 @@ cookie:{
     maxAge: 1000 * 60*60*365*10, //10 years
     httpOnly: true,// good for security reasons. In the JS code in your frontend you won't be allowed to access the cookie, so it's good for security.
     sameSite: "lax", // csrf
-    secure:  _prod_  // so if it's 'true', the cookies will only work in HTTPS. But in localhost we are not using https, so we're gonna make it a environment variable
+    secure:  false  // so if it's 'true', the cookies will only work in HTTPS. But in localhost we are not using https, so we're gonna make it a environment variable
 },
      saveUninitialized:false, // it will create a session by default even if we don't store any data in it
     
@@ -112,4 +112,6 @@ cookie:{
 
 };
 
-main();
+main().catch((err) => {
+    console.error(err);
+  });

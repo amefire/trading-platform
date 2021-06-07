@@ -1,6 +1,25 @@
 import { MyContext } from "src/types";
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { isAuth } from "src/utils/middleware/isAuth";
+import { Arg, Ctx, Field, InputType, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
+import { useContainer } from "typeorm";
 import { Post } from './../entities/Post';
+//import { isAuth } from './../utils/middleware/isAuth';
+
+@InputType()
+class PostInput {
+  @Field()
+  title: string;
+  @Field()
+  text: string;
+}
+
+// @ObjectType()
+// class PaginatedPosts {
+//   @Field(() => [Post])
+//   posts: Post[];
+//   @Field()
+//   hasMore: boolean;
+// }
 
 @Resolver()
 export class PostResolver {
@@ -28,14 +47,22 @@ export class PostResolver {
 
 
     @Mutation(()=> Post) // Queries are for getting datas, 'MUTATIONS' are for updating, deleting, inserting datas.
+    @UseMiddleware(isAuth) // check if the user is logged in before proceeding to the mutation CreatePost. A middleware always runs before our resolvers
     async createPost(
 
-        @Arg("title",() => String) title: string,
+        @Arg("input") input: PostInput,
+        @Ctx() {req}: MyContext
 
     ) : Promise<Post>
     {
-        // 
-        return Post.create({title}).save()
+        // if(!req.session.userId){
+        //     throw new Error("Not authenticated(not logged in)")
+        // }  // replaced by  @UseMiddleware(isAuth)
+        
+        return Post.create({...input, 
+            //points, // points is 0 by default so no need to add that
+             creatorId: req.session.userId // the creatorId is from the session so we know who user created the post
+            }).save()
       
     }
 

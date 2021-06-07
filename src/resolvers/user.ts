@@ -146,14 +146,14 @@ export class UserResolver {
     }
     @Query(()=> User,{nullable:true})
     async me(
-        @Ctx() ctx: MyContext
+        @Ctx() { redis, req }: MyContext
     ){
 
-        if(!ctx.req.session.userId){
+        if(!req.session.userId){
             return null // you are not logged in
         }
 
-        return await User.findOne(ctx.req.session.userId); 
+        return await User.findOne(req.session.userId); 
         
     }
 
@@ -229,7 +229,7 @@ export class UserResolver {
 
         @Arg('usernameOrEmail') usernameOrEmail: string,
         @Arg('password') password:string,
-        @Ctx() ctx: MyContext
+        @Ctx() { redis, req }: MyContext
     )   : Promise<UserResponse>
     {
 
@@ -262,8 +262,10 @@ export class UserResolver {
         };
     }
         
-    ctx.req.session.userId = user.id; //ben: ctx.req.session.uuserId = user.id;
+    req.session.userId = user.id; //ben: ctx.req.session.uuserId = user.id;
         return {user,};
+
+       //return  req.session.userId
         // {
         //     user,
         // };
